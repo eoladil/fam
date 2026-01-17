@@ -3,7 +3,7 @@
 # ==============================================================================
 # FAM - FLATPAK ALIAS MANAGER v1.0
 # ==============================================================================
-# Copyright (c) 2026 Vuk Hidalgo (aka eoladil)
+# Copyright (c) 2026 Vuk Hidalgo
 # Licensed under the GNU General Public License v3.0 (GPLv3)
 # SPDX-License-Identifier: GPL-3.0-only
 #
@@ -13,7 +13,7 @@
 #   Features background monitoring, auto-cleanup, and rich dashboard output.
 #
 # CREDITS:
-#   Original Concept & Logic: Vuk Hidalgo (aka eoladil)
+#   Original Concept & Logic: Vuk Hidalgo
 #   Refactoring & AI Assistance: Google Gemini
 # ==============================================================================
 
