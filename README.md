@@ -23,7 +23,7 @@ It runs silently in the background, cleaning up your system and keeping your she
 Download the `fam-installer.sh` script by cloning this repository:
 
 ```bash
-git clone [https://github.com/grondalf/fam.git](https://github.com/grondalf/fam.git)
+git clone [https://github.com/eoladil/fam.git](https://github.com/eoladil/fam.git)
 cd fam
 ```
 
