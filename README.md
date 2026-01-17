@@ -2,13 +2,13 @@
 
 ![Version](https://img.shields.io/badge/version-1.0-blue) ![License](https://img.shields.io/badge/license-GPLv3-green) ![Shell](https://img.shields.io/badge/shell-Bash%20%7C%20Zsh%20%7C%20Fish-orange)
 
-**FAM** is a robust automation tool that bridges the gap between Flatpak applications and your terminal. It automatically generates native shell aliases for all your installed Flatpaks, making them accessible via their simple names (e.g., typing `gimp` instead of `flatpak run org.gimp.GIMP`).
+**FAM** is an automation tool that bridges the gap between Flatpak applications and your terminal. It automatically generates native shell aliases for all your installed Flatpaks, making them accessible via their simple names (e.g., typing `gimp` instead of `flatpak run org.gimp.gimp`).
 
 It runs silently in the background, cleaning up your system and keeping your shell synchronized instantly, whether you install apps via the Terminal, GNOME Software, or KDE Discover.
 
 ## Features
 
-* A 100% sudo-less script. Everything is done in the user space.
+* A 100% sudo-less script. Everything is done on the user space.
 * Automatically maps the flatpak package `org.example.App` to `app` via a persistent alias.
 * Checks the generated aliases for conflicts with native apps and renames them accordingly to prevent system breakage.
 * Automatically removes orphaned runtimes to save disk space.
