@@ -8,7 +8,7 @@ It runs silently in the background, cleaning up your system and keeping your she
 
 ## Features
 
-* `sudo`isnt needed at all. Everything is done in the user space.
+* A 100% sudo-less script. Everything is done in the user space.
 * Automatically maps the flatpak package `org.example.App` to `app` via a persistent alias.
 * Checks the generated aliases for conflicts with native apps and renames them accordingly to prevent system breakage.
 * Automatically removes orphaned runtimes to save disk space.
