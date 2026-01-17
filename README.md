@@ -38,17 +38,14 @@ Run the installer script:
 ```
 And follow the instructions provided.
 
-### 3. Restart Terminal
-
-Close and reopen your terminal to load the new aliases.
 
 ## Usage
 Once installed, you don't need to do anything else. To see it in acton, try:
 
-- Installing an app: flatpak install flathub org.videolan.VLC
+- Installing an app: `flatpak install flathub org.videolan.vlc`
 - Then, run it by just typing `vlc` on your terminal.
 
-This also applies when installing an app via a GUI (such as GNOME Software or KDE's Discover). If successful, a notification will pop up telling you the alias is ready.
+This also applies when using a GUI too (such as GNOME Software or KDE's Discover). If successful, a native system notification will pop up telling you the alias is ready.
 
 ### Manual Mode
 You can run the `fam` command manually at any time to force a sync or check its status. You'll get the following output adjusted to your settings:
@@ -72,12 +69,11 @@ You can run the `fam` command manually at any time to force a sync or check its 
 
 ## Uninstallation
 
-If you wish to remove FAM, simply run the installer script again. It detects the installation and offers a clean removal option. This will:
+If you wish to remove FAM, simply run the installer script again. It detects the installation and offers a compelte removal option.
 
-- Stop and remove Systemd units.
-- Remove the fam binary.
-- Delete generated alias files.
-- Removes related code blocks from your .bashrc, .zshrc, or .config/fish.
+## Contributions
+
+If you wish to contribute, feel free to fork the project and make a pull request with your own changes. I'm still learning scripting so any suggestions and criticisms are welcome.
 
 ## License
 
@@ -86,4 +82,4 @@ This project is licensed under the **GNU General Public License v3.0**.
 ## Credits
 
 - Original Concept & Logic: Vuk Hidalgo 
-- Visual enhancements & AI Assistance: Google Gemini
+- Visual enhancements & AI Assistance: Google Gemini 3 Pro
