@@ -36,7 +36,7 @@ Run the installer script:
 ```Bash
 ./fam-installer.sh
 ```
-Select Option [1] to install.
+And follow the instructions provided.
 
 ### 3. Restart Terminal
 
