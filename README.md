@@ -8,13 +8,14 @@ It runs silently in the background, cleaning up your system and keeping your she
 
 ## Features
 
-* **Automated Aliasing:** Automatically maps `org.example.App` to `app`.
-* **Smart Conflict Detection:** Checks if a native app (e.g., `python`) exists. If a conflict is found, the Flatpak is aliased as `app-flatpak` to prevent system breakage.
-* **Auto-Cleanup:** Automatically runs `flatpak uninstall --unused` to remove orphaned runtimes and save disk space.
-* **Background Monitoring:** Uses a Systemd Path Unit to watch for changes. As soon as you install an app, FAM updates your aliases instantly.
-* **Universal Shell Support:** Native integration for **Bash**, **Zsh**, and **Fish**.
-* **Desktop Notifications:** Receive a subtle notification bubble when aliases are updated in the background.
-* **Rich Dashboard:** Run `fam` in the terminal to see a detailed status report.
+* `sudo`isnt needed at all. Everything is done in the user space.
+* Automatically maps the flatpak package `org.example.App` to `app` via a persistent alias.
+* Checks the generated aliases for conflicts with native apps and renames them accordingly to prevent system breakage.
+* Automatically removes orphaned runtimes to save disk space.
+* Uses a Systemd Path Unit to watch for changes. As soon as you install a flatpak app by any means, FAM updates your aliases instantly.
+* Native integration for **Bash**, **Zsh**, and **Fish**.
+* Receive a subtle notification bubble when aliases are updated in the background.
+* Run `fam` manually in the terminal to see a detailed status report.
 
 ## Installation
 
