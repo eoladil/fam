@@ -65,9 +65,7 @@ You can run the `fam` command manually at any time to force a sync or check its 
 ## How it Works
 
 - A Systemd user unit watches `/var/lib/flatpak` and `~/.local/share/flatpak`.
-
 - When a change is detected, `fam` generates a list of aliases.
-
 - A lightweight shell function intercepts flatpak operational commands to provide immediate response and provide visual feedback to the user.
 
 
@@ -76,11 +74,8 @@ You can run the `fam` command manually at any time to force a sync or check its 
 If you wish to remove FAM, simply run the installer script again. It detects the installation and offers a clean removal option. This will:
 
 - Stop and remove Systemd units.
-
 - Remove the fam binary.
-
 - Delete generated alias files.
-
 - Removes related code blocks from your .bashrc, .zshrc, or .config/fish.
 
 ## License
