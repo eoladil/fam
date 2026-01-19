@@ -78,8 +78,3 @@ If you wish to contribute, feel free to fork the project and make a pull request
 ## License
 
 This project is licensed under the **GNU General Public License v3.0**.
-
-## Credits
-
-- Original Concept & Logic: Vuk Hidalgo 
-- Visual enhancements & AI Assistance: Google Gemini 3 Pro
