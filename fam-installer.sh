@@ -13,7 +13,7 @@
 #   Features background monitoring, auto-cleanup, and rich dashboard output.
 #
 # CREDITS:
-#   Original Concept & Logic: Vuk Hidalgo
+#   Original Concept & Logic: eoladil
 #   Refactoring & AI Assistance: Google Gemini
 # ==============================================================================
 
