@@ -642,8 +642,6 @@ List active aliases.
 .TP
 .BR \-r ", " \-\-reinstall
 Repair systemd hooks and configuration.
-.SH AUTHOR
-eoladil
 EOF_MAN
 }
 
