@@ -9,15 +9,13 @@ FAM is an automation tool that generates shell aliases for Flatpak applications,
 * **Portability:** Built-in configuration backup and restore.
 
 ## Installation
-Download the script, make it executable, and run the installer:
+
+Run this command to download and start the installer:
+
 ```bash
-wget [https://raw.githubusercontent.com/YOUR_USERNAME/REPO_NAME/main/fam](https://raw.githubusercontent.com/YOUR_USERNAME/REPO_NAME/main/fam) -O fam
-chmod +x fam
-./fam
-
+curl -sSL [https://raw.githubusercontent.com/](https://raw.githubusercontent.com/)<user>/<repo>/main/fam -o /tmp/fam && chmod +x /tmp/fam && /tmp/fam || (wget -qO /tmp/fam [https://raw.githubusercontent.com/](https://raw.githubusercontent.com/)<user>/<repo>/main/fam && chmod +x /tmp/fam && /tmp/fam)
 ```
-
-*Select Option [1] to install.*
+Then select Option [1] to install.
 
 ## Usage
 
