@@ -3,6 +3,7 @@
 FAM is an automation tool that generates shell aliases for Flatpak applications, enabling users to launch them via short commands (e.g., `firefox`) instead of full Application IDs. It features systemd integration for automatic updates and an interactive configuration menu.
 
 ## Features
+
 * Bash, Zsh, and Fish support.
 * Automation detection of Flatpak installs, removals and changes via a `systemd` user service.
 * Support for name overrides, blacklisting, and environment variable injection.
@@ -12,18 +13,11 @@ FAM is an automation tool that generates shell aliases for Flatpak applications,
 ## Installation
 
 * Download the `fam` script.
-* Make it executable:
-  ```bash
-  chmod +x fam
-  ```
-* Run it:
-  ```
-  bash fam
-  ```
-* And select Option [1] to install.
+* Make it executable with `chmod +x fam`
+* Launch it with `./fam`
+* Select Option [1] to install.
 
 ## Usage
-
 Run `fam` to sync aliases. Use flags below alone for **interactive menus** or with arguments for **manual configuration**.
 
 | Category | Short | Long | Description | Manual Example |
