@@ -46,6 +46,10 @@ Run `fam` to sync aliases. Use flags below alone for **interactive menus** or wi
 
 FAM calculates a "clean name" for each Flatpak. If a system command already exists with that name, it appends `-flatpak` to prevent conflicts. Aliases are stored in `~/.bashrc.d/` or `~/.config/fish/`. A systemd path unit monitors Flatpak export directories to trigger silent updates upon application changes.
 
+## Disclaimer
+
+The script was made with AI assistance for personal use. Although it works reliably, check the source code before running it.
+
 ## License
 
 GNU General Public License v3.0 (GPLv3).
