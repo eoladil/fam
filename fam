@@ -1,0 +1,717 @@
+#!/bin/bash
+
+# ==============================================================================
+# FAM - FLATPAK ALIAS MANAGER v1.0
+# ==============================================================================
+# Copyright (c) 2026 eoladil
+# Licensed under the GNU General Public License v3.0 (GPLv3)
+# SPDX-License-Identifier: GPL-3.0-only
+# ==============================================================================
+
+# --- GLOBAL SETTINGS ---
+SCRIPT_NAME="fam"
+INSTALL_DIR="$HOME/.local/bin"
+MAN_DIR="$HOME/.local/share/man/man1"
+MAN_FILE="$MAN_DIR/fam.1"
+
+# --- MODULE: VISUALS ---
+setup_colors() {
+    RESET="\033[0m"
+    BOLD="\033[1m"
+    DIM="\033[2m"
+    RED="\033[31m"
+    GREEN="\033[32m"
+    YELLOW="\033[33m"
+    BLUE="\033[34m"
+    MAGENTA="\033[35m"
+    CYAN="\033[36m"
+    
+    # Theme Palette
+    BORDER_COLOR="${BLUE}${BOLD}" 
+    ACCENT_COLOR="${CYAN}"
+    
+    # Tags
+    TAG_OVR="${MAGENTA}${BOLD}[OVR]${RESET}"
+    TAG_ENV="${YELLOW}${BOLD}[ENV]${RESET}"
+    TAG_IGN="${RED}${BOLD}[IGN]${RESET}"
+    
+    H_BAR="${BORDER_COLOR}================================================================================${RESET}"
+    D_BAR="${BORDER_COLOR}--------------------------------------------------------------------------------${RESET}"
+}
+
+print_header() {
+    clear
+    setup_colors
+    echo -e "$H_BAR"
+    local title="FAM - FLATPAK ALIAS MANAGER v1.0"
+    local width=80
+    local padding=$(( (width - ${#title}) / 2 ))
+    printf "${RESET}%*s${BOLD}%s${RESET}%*s\n" $padding "" "$title" $padding ""
+    echo -e "$H_BAR"
+    echo -e "  ${DIM}Automated management of Flatpak aliases.${RESET}"
+    echo -e "  ${DIM}Run '${BOLD}fam --help${RESET}${DIM}' for command list.${RESET}"
+    echo -e ""
+}
+
+log_action() {
+    local action="$1"; local detail="$2"; local status="$3"
+    local TAG_OK="${GREEN}${BOLD}[OK]${RESET}"
+    local TAG_FAIL="${RED}${BOLD}[FAIL]${RESET}"
+    local TAG_SKIP="${YELLOW}${BOLD}[SKIP]${RESET}"
+    local TAG_INFO="${BLUE}${BOLD}[INFO]${RESET}"
+
+    local current_tag=$TAG_FAIL
+    [ "$status" -eq 0 ] && current_tag=$TAG_OK
+    [ "$status" -eq 2 ] && current_tag=$TAG_SKIP
+    [ "$status" -eq 3 ] && current_tag=$TAG_INFO
+
+    printf " %b %-28b %b\n" "$current_tag" "${BOLD}${action}${RESET}" "${DIM}${detail}${RESET}"
+}
+
+# --- MODULE: PAYLOAD GENERATION ---
+generate_worker_script() {
+    cat << 'EOF_WORKER'
+#!/bin/bash
+# FAM v1.0 - Worker Script
+VERSION="1.0"
+
+# --- CONSTANTS ---
+SCRIPT_PATH="$HOME/.local/bin/fam"
+ALIAS_DIR="$HOME/.bashrc.d"
+ALIAS_FILE_SH="$ALIAS_DIR/flatpak-aliases.sh"
+ALIAS_FILE_FISH="$HOME/.config/fish/fam-aliases.fish"
+FISH_DIR="$HOME/.config/fish"
+SENTINEL_FILE="$ALIAS_DIR/.fam_sentinel"
+MAN_FILE="$HOME/.local/share/man/man1/fam.1"
+
+# Config Files
+CONFIG_DIR="$HOME/.config/fam"
+OVERRIDES_FILE="$CONFIG_DIR/overrides.conf"
+IGNORE_FILE="$CONFIG_DIR/ignore.conf"
+ENV_FILE="$CONFIG_DIR/env.conf"
+
+SYSTEMD_DIR="$HOME/.config/systemd/user"
+SERVICE_FILE="$SYSTEMD_DIR/fam.service"
+PATH_FILE="$SYSTEMD_DIR/fam.path"
+
+MARKER_START="# --- FAM CONFIG (DO NOT EDIT) ---"
+MARKER_END="# --- END FAM CONFIG ---"
+
+# --- VISUALS ---
+RESET="\033[0m"; BOLD="\033[1m"; DIM="\033[2m"
+RED="\033[31m"; GREEN="\033[32m"; YELLOW="\033[33m"
+BLUE="\033[34m"; MAGENTA="\033[35m"; CYAN="\033[36m"
+
+BORDER_COLOR="${BLUE}${BOLD}"
+ACCENT_COLOR="${CYAN}"
+TAG_OVR="${MAGENTA}${BOLD}[OVR]${RESET}"
+TAG_ENV="${YELLOW}${BOLD}[ENV]${RESET}"
+TAG_IGN="${RED}${BOLD}[IGN]${RESET}"
+
+H_BAR="${BORDER_COLOR}================================================================================${RESET}"
+D_BAR="${BORDER_COLOR}--------------------------------------------------------------------------------${RESET}"
+
+# Global Return Variable for Menu Selection
+_FAM_SEL=""
+
+# --- HELPERS ---
+log_msg() { printf " ${GREEN}${BOLD}[OK]${RESET} %-25b ${DIM}%b${RESET}\n" "${BOLD}$1${RESET}" "$2"; }
+log_info() { printf " ${BLUE}${BOLD}[INFO]${RESET} %-23b ${DIM}%b${RESET}\n" "${BOLD}$1${RESET}" "$2"; }
+print_section() { 
+    echo -e "\n$H_BAR"
+    local title="$1"
+    local width=80
+    local padding=$(( (width - ${#title}) / 2 ))
+    printf "${RESET}%*s${BOLD}%s${RESET}%*s\n" $padding "" "$title" $padding ""
+    echo -e "$H_BAR"
+}
+
+# --- SHELL CONFIGURATION ---
+setup_posix_shell() {
+    local rc_file="$1"
+    [ ! -f "$rc_file" ] && return
+    sed -i "/$MARKER_START/,/$MARKER_END/d" "$rc_file"; sed -i '${/^$/d;}' "$rc_file"
+    cat <<END_CONFIG >> "$rc_file"
+
+$MARKER_START
+if [ -z "\${PATH##*$HOME/.local/bin*}" ] && [ -d "$HOME/.local/bin" ]; then
+    export PATH="\$HOME/.local/bin:\$PATH"
+fi
+if [ -f "$HOME/.bashrc.d/flatpak-aliases.sh" ]; then
+    source "$HOME/.bashrc.d/flatpak-aliases.sh"
+fi
+flatpak() {
+    command flatpak "\$@"
+    local status=\$?
+    if [ \$status -eq 0 ]; then
+        case "\$1" in
+            install|uninstall|remove|update)
+                if [ -x "$HOME/.local/bin/fam" ]; then "$HOME/.local/bin/fam"; fi ;;
+        esac
+    fi
+    return \$status
+}
+$MARKER_END
+END_CONFIG
+    log_msg "Shell Config" "$(basename "$rc_file") updated"
+}
+
+setup_fish_shell() {
+    if ! command -v fish >/dev/null || [ ! -d "$FISH_DIR" ]; then return; fi
+    mkdir -p "$FISH_DIR/conf.d"
+    cat > "$FISH_DIR/conf.d/fam.fish" <<EOF_FISH
+# FAM - Flatpak Alias Manager for Fish
+if test -f "$ALIAS_FILE_FISH"
+    source "$ALIAS_FILE_FISH"
+end
+function flatpak --wraps flatpak
+    command flatpak \$argv
+    set -l func_status \$status
+    if test \$func_status -eq 0
+        if string match -r "^(install|uninstall|remove|update)$" -- \$argv[1] > /dev/null 2>&1
+            if test -x "$HOME/.local/bin/fam"
+                "$HOME/.local/bin/fam"
+            end
+        end
+    end
+    return \$func_status
+end
+EOF_FISH
+    log_msg "Shell Config" "fish/conf.d updated"
+}
+
+# --- CONFIG MANAGEMENT ---
+load_config_map() {
+    local file="$1"
+    local -n map="$2"
+    if [ -f "$file" ]; then
+        while IFS='=' read -r key value; do map["$key"]="$value"; done < "$file"
+    fi
+}
+
+save_config_item() {
+    local file="$1"; local key="$2"; local value="$3"
+    mkdir -p "$CONFIG_DIR"
+    if [ -f "$file" ]; then sed -i "/^$key=/d" "$file"; fi
+    if [ -n "$value" ]; then echo "$key=$value" >> "$file"; fi
+}
+
+remove_config_item() {
+    local file="$1"; local key="$2"
+    if [ -f "$file" ]; then
+        sed -i "/^$key=/d" "$file"
+        return 0
+    fi
+    return 1
+}
+
+# --- INTERACTIVE SELECTION ---
+select_app() {
+    local prompt="$1"
+    local filter_map_name="$2"
+    
+    # Reset Global Return
+    _FAM_SEL=""
+    
+    local sorting_tmp=$(mktemp)
+    
+    # Load Status Maps for Tags
+    declare -A st_ovr; load_config_map "$OVERRIDES_FILE" st_ovr
+    declare -A st_ign; load_config_map "$IGNORE_FILE" st_ign
+    declare -A st_env; load_config_map "$ENV_FILE" st_env
+
+    # Generate list
+    while IFS=$'\t' read -r raw_id raw_name; do
+        
+        # If a filter map is provided, skip items NOT in that map
+        if [ -n "$filter_map_name" ]; then
+             if eval "[ -z \"\${$filter_map_name['$raw_id']}\" ]"; then continue; fi
+        fi
+
+        clean_name=$(echo "$raw_name" | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | tr -cd '[:alnum:]-')
+        [ -z "$clean_name" ] && continue
+        
+        # Build Tag String
+        tags=""
+        [ -n "${st_ovr[$raw_id]}" ] && tags="${tags}${TAG_OVR}"
+        [ -n "${st_env[$raw_id]}" ] && tags="${tags}${TAG_ENV}"
+        [ -n "${st_ign[$raw_id]}" ] && tags="${tags}${TAG_IGN}"
+        
+        echo "${clean_name}|${raw_id}|${tags}" >> "$sorting_tmp"
+    done < <(flatpak list --app --columns=application,name)
+
+    if [ ! -s "$sorting_tmp" ]; then
+        echo -e "  ${YELLOW}${BOLD}[WARN]${RESET} No matching applications found."
+        rm -f "$sorting_tmp"
+        return 1
+    fi
+
+    echo -e "$D_BAR"
+    printf " ${BOLD}%-4s %-25s %-35s %s${RESET}\n" "NO." "NAME" "APP ID" "STATUS"
+    echo -e "$D_BAR"
+    
+    declare -a ids; declare -a names; local i=1
+    while IFS='|' read -r s_name s_id s_tags; do
+         printf " ${DIM}${BOLD}[%02d]${RESET} ${ACCENT_COLOR}%-25b${RESET} %-35s %b\n" "$i" "$s_name" "$s_id" "$s_tags"
+         ids[$i]="$s_id"; names[$i]="$s_name"; ((i++))
+    done < <(sort "$sorting_tmp")
+    rm -f "$sorting_tmp"
+    
+    echo -e "$D_BAR"
+    echo -e " ${DIM}${BOLD}[0]${RESET} Cancel Operation"
+    echo ""
+    read -p "  Select Number: " selection
+    
+    if [[ "$selection" == "0" ]]; then return 1; fi
+    if [[ "$selection" =~ ^[0-9]+$ ]] && [ "$selection" -ge 1 ] && [ "$selection" -lt "$i" ]; then
+        _FAM_SEL="${ids[$selection]}:${names[$selection]}" 
+        return 0
+    fi
+    return 1
+}
+
+# --- ACTIONS ---
+
+do_interactive_config() {
+    local mode="$1" # override, ignore, env, remove_override, unignore
+    print_section "INTERACTIVE MENU: ${mode^^}"
+    
+    if [ "$mode" == "remove_override" ]; then
+        declare -A active_overrides; load_config_map "$OVERRIDES_FILE" active_overrides
+        if [ ${#active_overrides[@]} -eq 0 ]; then echo -e "  ${YELLOW}No overrides active.${RESET}"; exit 0; fi
+        echo -e "  Select an override to remove."
+        select_app "Select" "active_overrides"
+        
+    elif [ "$mode" == "unignore" ]; then
+        declare -A active_ignores; load_config_map "$IGNORE_FILE" active_ignores
+        if [ ${#active_ignores[@]} -eq 0 ]; then echo -e "  ${YELLOW}No ignored apps.${RESET}"; exit 0; fi
+        echo -e "  Select an app to un-ignore."
+        select_app "Select" "active_ignores"
+        
+    else
+        echo -e "  Select an application from the list below."
+        select_app "Select"
+    fi
+
+    if [ $? -ne 0 ] || [ -z "$_FAM_SEL" ]; then
+        echo -e "\n  ${YELLOW}${BOLD}[CANCEL]${RESET} Operation cancelled."
+        exit 0
+    fi
+    
+    local app_id="${_FAM_SEL%%:*}"
+    local app_name="${_FAM_SEL##*:}"
+    echo -e "\n  ${BOLD}Selected:${RESET} ${ACCENT_COLOR}$app_id${RESET}"
+    
+    case "$mode" in
+        override)
+            read -p "  Enter NEW alias (default: $app_name): " input
+            [ -z "$input" ] && input="$app_name"
+            save_config_item "$OVERRIDES_FILE" "$app_id" "$(echo "$input" | tr -d ' ')"
+            ;;
+        remove_override)
+            remove_config_item "$OVERRIDES_FILE" "$app_id"
+            echo -e "  ${GREEN}Override removed.${RESET}"
+            ;;
+        env)
+            echo -e "  ${DIM}Example: GTK_THEME=Adwaita:dark${RESET}"
+            read -p "  Enter Environment Variables: " input
+            save_config_item "$ENV_FILE" "$app_id" "$input"
+            ;;
+        ignore)
+            read -p "  Ignore this app? [Y/n] " confirm
+            if [[ -z "$confirm" || "$confirm" =~ ^[Yy]$ ]]; then
+                save_config_item "$IGNORE_FILE" "$app_id" "ignored"
+            else echo "Cancelled."; exit 0; fi
+            ;;
+        unignore)
+            remove_config_item "$IGNORE_FILE" "$app_id"
+            echo -e "  ${GREEN}App un-ignored.${RESET}"
+            ;;
+    esac
+    
+    echo -e "\n${GREEN}${BOLD}[SUCCESS]${RESET} Configuration saved."
+    do_sync "silent"
+    echo -e " ${GREEN}${BOLD}[RELOAD]${RESET}  ${DIM}Applying changes...${RESET}"
+    exec "$SHELL"
+}
+
+do_sync() {
+    FORCE=$1
+    DRY_RUN=0; [ "$FORCE" == "preview" ] && DRY_RUN=1
+    mkdir -p "$ALIAS_DIR"
+    TMP_SH=$(mktemp); TMP_FISH=$(mktemp)
+
+    [ "$DRY_RUN" -eq 0 ] && command -v flatpak >/dev/null && flatpak uninstall --unused --noninteractive &>/dev/null
+
+    echo "# FAM AUTO-GENERATED" > "$TMP_SH"
+    declare -A overrides; load_config_map "$OVERRIDES_FILE" overrides
+    declare -A ignores;   load_config_map "$IGNORE_FILE" ignores
+    declare -A envs;      load_config_map "$ENV_FILE" envs
+
+    flatpak list --app --columns=application,name | sort > "$TMP_SH.list"
+    count=0
+    
+    if [ "$DRY_RUN" -eq 1 ]; then
+        print_section "PREVIEW MODE (DRY RUN)"
+        printf " ${BOLD}%-25s %-35s %s${RESET}\n" "ALIAS" "COMMAND" "TAGS"
+        echo -e "$D_BAR"
+    fi
+
+    while IFS=$'\t' read -r app_id app_name; do
+        mods=""
+        is_ignored=0
+        
+        # Tags Logic
+        [ -n "${overrides[$app_id]}" ] && mods="${mods}${TAG_OVR} "
+        [ -n "${envs[$app_id]}" ] && mods="${mods}${TAG_ENV} "
+        
+        if [ -n "${ignores[$app_id]}" ]; then
+            is_ignored=1
+            mods="${mods}${TAG_IGN}"
+        fi
+
+        # Preview shows everything (including ignored)
+        if [ "$DRY_RUN" -eq 1 ]; then
+             if [ $is_ignored -eq 1 ]; then
+                 printf " ${DIM}%-25s %-35s %b${RESET}\n" "(ignored)" "$app_id" "$mods"
+             else
+                 # Alias Calc
+                 if [ -n "${overrides[$app_id]}" ]; then f_alias="${overrides[$app_id]}"; else
+                    f_alias=$(echo "$app_name" | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | tr -cd '[:alnum:]-')
+                    type -P "$f_alias" &>/dev/null && f_alias="${f_alias}-flatpak"
+                 fi
+                 cmd="flatpak run $app_id"
+                 [ -n "${envs[$app_id]}" ] && cmd="${envs[$app_id]} $cmd"
+                 printf " ${ACCENT_COLOR}%-25s${RESET} %-35s %b\n" "$f_alias" "$cmd" "$mods"
+             fi
+             continue
+        fi
+
+        # Actual Sync (Skip ignored)
+        [ $is_ignored -eq 1 ] && continue
+
+        if [ -n "${overrides[$app_id]}" ]; then
+            final_alias="${overrides[$app_id]}"
+        else
+            clean_name=$(echo "$app_name" | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | tr -cd '[:alnum:]-')
+            [ -z "$clean_name" ] && continue
+            final_alias="$clean_name"
+            if type -P "$clean_name" &>/dev/null; then final_alias="${clean_name}-flatpak"; fi
+        fi
+
+        cmd="flatpak run $app_id"
+        [ -n "${envs[$app_id]}" ] && cmd="${envs[$app_id]} $cmd"
+
+        echo "alias $final_alias='$cmd'" >> "$TMP_SH"
+        echo "alias $final_alias \"$cmd\"" >> "$TMP_FISH"
+        ((count++))
+    done < "$TMP_SH.list"
+    rm -f "$TMP_SH.list"
+
+    if [ "$DRY_RUN" -eq 1 ]; then
+        echo -e "$D_BAR"
+        rm -f "$TMP_SH" "$TMP_FISH"
+        return
+    fi
+
+    GENERATE_FISH=0; [ -d "$FISH_DIR" ] && GENERATE_FISH=1
+    CHANGES=0
+    if [ "$FORCE" == "1" ] || [ "$FORCE" == "silent" ] || [ ! -f "$ALIAS_FILE_SH" ]; then CHANGES=1;
+    elif cmp -s "$TMP_SH" "$ALIAS_FILE_SH"; then
+        if [ -f "$SENTINEL_FILE" ]; then
+            now=$(date +%s); file_time=$(date -r "$SENTINEL_FILE" +%s)
+            if [ $((now - file_time)) -lt 60 ]; then CHANGES=1; rm -f "$SENTINEL_FILE"; fi
+        fi
+    else CHANGES=1; touch "$SENTINEL_FILE"; fi
+
+    if [ $CHANGES -eq 1 ]; then
+        mv "$TMP_SH" "$ALIAS_FILE_SH"; chmod +x "$ALIAS_FILE_SH"
+        [ $GENERATE_FISH -eq 1 ] && mv "$TMP_FISH" "$ALIAS_FILE_FISH"
+    fi
+    rm -f "$TMP_SH" "$TMP_FISH"
+
+    if [ -t 1 ] && [ "$FORCE" != "silent" ]; then
+        print_section "STATUS REPORT"
+        if [ $CHANGES -eq 1 ]; then
+            log_msg "Synchronization" "Aliases updated successfully"
+            log_msg "Cleanup" "Unused runtimes removed"
+        else
+            log_info "Synchronization" "No changes needed"
+        fi
+        echo -e "$D_BAR"
+        printf " %-25s : ${BOLD}%s${RESET}\n" "Total Aliases" "$count"
+        [ ${#overrides[@]} -gt 0 ] && printf " %-25s : ${BOLD}%s${RESET}\n" "Overrides" "${#overrides[@]}"
+        [ ${#ignores[@]} -gt 0 ] && printf " %-25s : ${BOLD}%s${RESET}\n" "Ignored Apps" "${#ignores[@]}"
+        echo -e "$H_BAR\n"
+    elif [ $CHANGES -eq 1 ] && command -v notify-send >/dev/null; then
+         if [ "$PPID" -ne "$$" ]; then notify-send -u low -a "FAM" "Aliases Updated" "Synced $count apps."; fi
+    fi
+}
+
+do_backup() {
+    local dest="$1"
+    [ -z "$dest" ] && dest="fam-backup-$(date +%Y%m%d).tar.gz"
+    if [ ! -d "$CONFIG_DIR" ]; then echo -e "  ${YELLOW}${BOLD}[WARN]${RESET} No configuration to backup."; return; fi
+    tar -czf "$dest" -C "$HOME/.config" fam
+    log_msg "Backup" "Created at $dest"
+}
+
+do_restore() {
+    local src="$1"
+    if [ -z "$src" ] || [ ! -f "$src" ]; then echo -e "  ${RED}${BOLD}[ERROR]${RESET} File not found."; exit 1; fi
+    mkdir -p "$CONFIG_DIR"
+    tar -xzf "$src" -C "$HOME/.config"
+    log_msg "Restore" "Configuration restored from $src"
+    do_sync "1"
+}
+
+do_show() {
+    [ ! -f "$ALIAS_FILE_SH" ] && do_sync "silent"
+    
+    declare -A st_ovr; load_config_map "$OVERRIDES_FILE" st_ovr
+    declare -A st_env; load_config_map "$ENV_FILE" st_env
+    
+    print_section "ACTIVE ALIASES"
+    printf " ${BOLD}%-25s %-35s %s${RESET}\n" "ALIAS" "TARGET APP ID" "TAGS"
+    echo -e "$D_BAR"
+    
+    grep "^alias" "$ALIAS_FILE_SH" | awk -F"[=']" '{ 
+        name=$1; sub("alias ", "", name); 
+        cmd=$3; sub("flatpak run ", "", cmd); 
+        split(cmd, parts, " ");
+        id=parts[length(parts)];
+        printf "%s|%s\n", name, id
+    }' | sort -k1 | while IFS='|' read -r name id; do
+        tags=""
+        [ -n "${st_ovr[$id]}" ] && tags="${tags}${TAG_OVR} "
+        [ -n "${st_env[$id]}" ] && tags="${tags}${TAG_ENV} "
+        printf " ${ACCENT_COLOR}%-25s${RESET} %-35s %b\n" "$name" "$id" "$tags"
+    done
+    
+    if [ -f "$IGNORE_FILE" ]; then
+        ign_count=$(wc -l < "$IGNORE_FILE")
+        if [ "$ign_count" -gt 0 ]; then
+            echo -e "$D_BAR"
+            echo -e "  ${TAG_IGN} ${BOLD}$ign_count apps are hidden.${RESET} Use 'fam -p' to see them."
+        fi
+    fi
+    echo -e "$D_BAR\n"
+}
+
+do_reinstall() {
+    print_section "REPAIRING CONFIGURATION"
+    mkdir -p "$SYSTEMD_DIR"
+    cat > "$SERVICE_FILE" <<EOF
+[Unit]
+Description=FAM - Flatpak Alias Manager
+[Service]
+Type=oneshot
+ExecStart=$SCRIPT_PATH
+EOF
+    cat > "$PATH_FILE" <<EOF
+[Unit]
+Description=Watch for Flatpak Installs
+[Path]
+PathChanged=%h/.local/share/flatpak/exports/share/applications
+PathChanged=/var/lib/flatpak/exports/share/applications
+Unit=fam.service
+[Install]
+WantedBy=default.target
+EOF
+    systemctl --user daemon-reload &>/dev/null
+    systemctl --user enable --now fam.path &>/dev/null
+    log_msg "Systemd Units" "Registered & Activated"
+    [ -f "$HOME/.bashrc" ] && setup_posix_shell "$HOME/.bashrc"
+    [ -f "$HOME/.zshrc" ] && setup_posix_shell "$HOME/.zshrc"
+    setup_fish_shell
+    do_sync "silent"
+    echo -e "$H_BAR"
+    echo -e " ${GREEN}${BOLD}[SUCCESS]${RESET} ${BOLD}REINSTALL COMPLETE${RESET}"
+    echo -e "           Reloading shell..."
+    echo -e "$H_BAR\n"
+    exec "$SHELL"
+}
+
+do_uninstall() {
+    print_section "UNINSTALLATION"
+    systemctl --user stop fam.path &>/dev/null
+    systemctl --user disable fam.path &>/dev/null
+    rm -f "$SERVICE_FILE" "$PATH_FILE"
+    log_msg "Systemd Units" "Stopped & Removed"
+    rm -f "$ALIAS_FILE_SH" "$ALIAS_FILE_FISH" "$SENTINEL_FILE" "$MAN_FILE"
+    log_msg "Configuration" "Files removed"
+    [ -f "$HOME/.bashrc" ] && sed -i "/$MARKER_START/,/$MARKER_END/d" "$HOME/.bashrc"
+    [ -f "$HOME/.zshrc" ] && sed -i "/$MARKER_START/,/$MARKER_END/d" "$HOME/.zshrc"
+    log_msg "Shell Configs" "Cleaned .bashrc/.zshrc"
+    
+    if [ -d "$CONFIG_DIR" ]; then
+        echo -e "$D_BAR"
+        echo -e "${YELLOW}Custom configuration detected.${RESET}"
+        read -p "Delete overrides, ignores, and backups? [y/N] " response
+        if [[ "$response" =~ ^[Yy]$ ]]; then
+            rm -rf "$CONFIG_DIR"
+            log_msg "Config Data" "Deleted permanently"
+        else
+            log_info "Config Data" "Preserved in ~/.config/fam/"
+        fi
+    fi
+    systemctl --user daemon-reload &>/dev/null
+    echo -e "\n$H_BAR"
+    echo -e " ${GREEN}${BOLD}[SUCCESS]${RESET} ${BOLD}UNINSTALLED${RESET}"
+    echo -e "$H_BAR\n"
+    rm -- "$0"
+    exec "$SHELL"
+}
+
+# --- CLI ROUTER ---
+case "$1" in
+    -h|--help)
+        echo "FAM - Flatpak Alias Manager v$VERSION"
+        echo "Usage: fam [OPTIONS]"
+        echo ""
+        printf "  %-28s %s\n" "Core:"
+        printf "  %-28s %s\n" "-s, --show" "List active aliases"
+        printf "  %-28s %s\n" "-p, --preview" "Dry run (show potential aliases)"
+        printf "  %-28s %s\n" "-f, --force" "Force regeneration"
+        echo ""
+        printf "  %-28s %s\n" "Configuration:"
+        printf "  %-28s %s\n" "-o, --override [ID NAME]" "Set custom alias (Interactive)"
+        printf "  %-28s %s\n" "-co, --clear-override [ID]" "Remove custom alias (Interactive)"
+        printf "  %-28s %s\n" "-i, --ignore [ID]" "Block app from aliasing (Interactive)"
+        printf "  %-28s %s\n" "-ui, --unignore [ID]" "Un-block app (Interactive)"
+        printf "  %-28s %s\n" "-e, --env [ID VARS]" "Inject environment variables"
+        echo ""
+        printf "  %-28s %s\n" "Maintenance:"
+        printf "  %-28s %s\n" "--backup / --restore" "Manage config files"
+        printf "  %-28s %s\n" "-r, --reinstall" "Repair system integration"
+        printf "  %-28s %s\n" "-u, --uninstall" "Remove FAM completely"
+        ;;
+    -v|--version) echo "fam v$VERSION" ;;
+    -r|--reinstall) do_reinstall ;;
+    -s|--show) do_show ;;
+    -p|--preview) do_sync "preview" ;;
+    -o|--override) if [ -z "$2" ]; then do_interactive_config "override"; else save_config_item "$OVERRIDES_FILE" "$2" "$3"; do_sync "1"; fi ;;
+    -co|--clear-override) if [ -z "$2" ]; then do_interactive_config "remove_override"; else remove_config_item "$OVERRIDES_FILE" "$2"; echo "Removed."; do_sync "1"; fi ;;
+    -i|--ignore)   if [ -z "$2" ]; then do_interactive_config "ignore"; else save_config_item "$IGNORE_FILE" "$2" "ignored"; do_sync "1"; fi ;;
+    -ui|--unignore) if [ -z "$2" ]; then do_interactive_config "unignore"; else remove_config_item "$IGNORE_FILE" "$2"; echo "Removed."; do_sync "1"; fi ;;
+    -e|--env)      if [ -z "$2" ]; then do_interactive_config "env"; else save_config_item "$ENV_FILE" "$2" "$3"; do_sync "1"; fi ;;
+    --backup) do_backup "$2" ;;
+    --restore) do_restore "$2" ;;
+    -u|--uninstall) do_uninstall ;;
+    -f|--force) do_sync "1" ;;
+    *) do_sync "0" ;;
+esac
+EOF_WORKER
+}
+
+# --- MODULE: MAN PAGE ---
+generate_man_page() {
+    cat <<EOF_MAN
+.TH FAM 1 "January 2026" "v1.0" "User Commands"
+.SH NAME
+fam \- Flatpak Alias Manager
+.SH SYNOPSIS
+.B fam
+[\fIOPTIONS\fR]
+.SH DESCRIPTION
+.B fam
+automatically manages shell aliases for Flatpak applications. It runs in the background
+and ensures that you can launch Flatpaks using simple commands.
+.SH OPTIONS
+.TP
+.BR \-o ", " \-\-override
+Interactive or manual override of alias names.
+.TP
+.BR \-co ", " \-\-clear-override
+Remove a custom override.
+.TP
+.BR \-i ", " \-\-ignore
+Blacklist an app so it does not get an alias.
+.TP
+.BR \-ui ", " \-\-unignore
+Remove an app from the blacklist.
+.TP
+.BR \-e ", " \-\-env
+Inject environment variables (e.g. GTK_THEME).
+.TP
+.BR \-p ", " \-\-preview
+Dry run. Shows what aliases would be generated without saving.
+.TP
+.BR \-s ", " \-\-show
+List active aliases.
+.TP
+.BR \-r ", " \-\-reinstall
+Repair systemd hooks and configuration.
+.SH AUTHOR
+eoladil
+EOF_MAN
+}
+
+# --- MODULE: COMPLETIONS ---
+generate_completions() {
+    # Bash
+    mkdir -p "$HOME/.local/share/bash-completion/completions"
+    cat > "$HOME/.local/share/bash-completion/completions/fam" <<EOF
+_fam() {
+    local cur=\${COMP_WORDS[COMP_CWORD]}
+    if [[ \$COMP_CWORD -eq 1 ]]; then
+        COMPREPLY=( \$(compgen -W "-o --override -co --clear-override -i --ignore -ui --unignore -e --env -s --show -p --preview -f --force -r --reinstall -u --uninstall --backup --restore -v --version -h --help" -- \$cur) )
+    fi
+}
+complete -F _fam fam
+EOF
+    # Fish
+    if command -v fish >/dev/null; then
+        mkdir -p "$HOME/.config/fish/completions"
+        echo 'complete -c fam -f -a "-o -co -i -ui -e -s -p -f -r -u -v -h --backup --restore"' > "$HOME/.config/fish/completions/fam.fish"
+    fi
+}
+
+# --- INSTALLER ---
+install_wrapper() {
+    local target="$INSTALL_DIR/$SCRIPT_NAME"
+    echo -e "$H_BAR"
+    local title="FAM INSTALLER"
+    local width=80
+    local padding=$(( (width - ${#title}) / 2 ))
+    printf "${RESET}%*s${BOLD}%s${RESET}%*s\n" $padding "" "$title" $padding ""
+    echo -e "$H_BAR"
+
+    mkdir -p "$INSTALL_DIR"
+    local tmp_script=$(mktemp)
+    generate_worker_script > "$tmp_script"
+    if mv "$tmp_script" "$target" && chmod +x "$target"; then
+        log_action "Binary Installation" "$target" 0
+    else
+        log_action "Binary Installation" "Failed" 1; return
+    fi
+
+    mkdir -p "$MAN_DIR"
+    if generate_man_page > "$MAN_FILE"; then
+        log_action "Documentation" "Man page installed" 0
+        command -v mandb >/dev/null && mandb -q --user-db &>/dev/null
+    fi
+    
+    generate_completions
+    log_action "Shell Completions" "Installed" 0
+
+    echo ""
+    "$target" --reinstall
+}
+
+# --- MAIN MENU ---
+print_header
+[ -f "$INSTALL_DIR/$SCRIPT_NAME" ] && STATUS="${GREEN}${BOLD}INSTALLED${RESET}" || STATUS="${RED}${BOLD}NOT INSTALLED${RESET}"
+echo -e "   Current Status: $STATUS"
+echo -e "$D_BAR"
+echo -e "   ${BOLD}[1]${RESET} Install / Update FAM"
+[ -f "$INSTALL_DIR/$SCRIPT_NAME" ] && echo -e "   ${BOLD}[2]${RESET} Uninstall"
+echo -e "   ${BOLD}[3]${RESET} Exit"
+echo -e "$D_BAR"
+echo ""
+read -p "   Select option: " opt
+case $opt in
+    1) install_wrapper ;;
+    2) "$INSTALL_DIR/$SCRIPT_NAME" --uninstall ;;
+    *) exit ;;
+esac
