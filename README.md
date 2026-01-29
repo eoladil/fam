@@ -1,80 +1,55 @@
 # FAM - Flatpak Alias Manager
 
-![Version](https://img.shields.io/badge/version-1.0-blue) ![License](https://img.shields.io/badge/license-GPLv3-green) ![Shell](https://img.shields.io/badge/shell-Bash%20%7C%20Zsh%20%7C%20Fish-orange)
-
-**FAM** is an automation tool that bridges the gap between Flatpak applications and your terminal. It automatically generates native shell aliases for all your installed Flatpaks, making them accessible via their simple names (e.g., typing `gimp` instead of `flatpak run org.gimp.gimp`).
-
-It runs silently in the background, cleaning up your system and keeping your shell synchronized instantly, whether you install apps via the Terminal, GNOME Software, or KDE Discover.
+FAM is an automation tool that generates shell aliases for Flatpak applications, enabling users to launch them via short commands (e.g., `firefox`) instead of full Application IDs. It features systemd integration for automatic updates and an interactive configuration menu.
 
 ## Features
-
-* A 100% sudo-less script. Everything is done on the user space.
-* Automatically maps the flatpak package `org.example.App` to `app` via a persistent alias.
-* Checks the generated aliases for conflicts with native apps and renames them accordingly to prevent system breakage.
-* Automatically removes orphaned runtimes to save disk space.
-* Uses a Systemd Path Unit to watch for changes. As soon as you install a flatpak app by any means, FAM updates your aliases instantly.
-* Native integration for **Bash**, **Zsh**, and **Fish**.
-* Receive a subtle notification bubble when aliases are updated in the background.
-* Run `fam` manually in the terminal to see a detailed status report.
+* **Shell Support:** Bash, Zsh, and Fish.
+* **Automation:** Systemd user units detect installs/removals and sync aliases.
+* **Customization:** Support for name overrides, blacklisting, and environment variable injection.
+* **Portability:** Built-in configuration backup and restore.
 
 ## Installation
-
-### 1. Download the Installer
-Download the `fam-installer.sh` script by cloning this repository:
-
+Download the script, make it executable, and run the installer:
 ```bash
-git clone [https://github.com/eoladil/fam.git](https://github.com/eoladil/fam.git)
-cd fam
+wget [https://raw.githubusercontent.com/YOUR_USERNAME/REPO_NAME/main/fam](https://raw.githubusercontent.com/YOUR_USERNAME/REPO_NAME/main/fam) -O fam
+chmod +x fam
+./fam
+
 ```
 
-### 2. Make the script executable
-`chmod +x fam-installer.sh`
-
-### 2. Run the Installer
-
-Run the installer script:
-```Bash
-./fam-installer.sh
-```
-And follow the instructions provided.
-
+*Select Option [1] to install.*
 
 ## Usage
-Once installed, you don't need to do anything else. To see it in acton, try:
 
-- Installing an app: `flatpak install flathub org.videolan.vlc`
-- Then, run it by just typing `vlc` on your terminal.
+Run `fam` to sync aliases. Use flags below alone for **interactive menus** or with arguments for **manual configuration**.
 
-This also applies when using a GUI too (such as GNOME Software or KDE's Discover). If successful, a native system notification will pop up telling you the alias is ready.
+| Category | Short | Long | Description | Manual Example |
+| --- | --- | --- | --- | --- |
+| **Core** | `-s` | `--show` | List active aliases and tags. | `fam -s` |
+|  | `-f` | `--force` | Force alias regeneration. | `fam -f` |
+|  | `-p` | `--preview` | Dry run (no files modified). | `fam -p` |
+| **Config** | `-o` | `--override` | Set a custom alias name. | `fam -o [ID] [NAME]` |
+|  | `-co` | `--clear-override` | Remove a custom alias. | `fam -co [ID]` |
+|  | `-i` | `--ignore` | Blacklist an application. | `fam -i [ID]` |
+|  | `-ui` | `--unignore` | Remove from blacklist. | `fam -ui [ID]` |
+|  | `-e` | `--env` | Inject environment variables. | `fam -e [ID] [VARS]` |
+| **Maint.** |  | `--backup` | Export config to tarball. | `fam --backup [PATH]` |
+|  |  | `--restore` | Import config from tarball. | `fam --restore [PATH]` |
+|  | `-r` | `--reinstall` | Repair systemd/shell hooks. | `fam -r` |
+|  | `-u` | `--uninstall` | Completely remove FAM. | `fam -u` |
 
-### Manual Mode
-You can run the `fam` command manually at any time to force a sync or check its status. You'll get the following output adjusted to your settings:
+## Examples
 
-```
-------------------------------------------------------------
-   FAM - FLATPAK ALIAS MANAGER v1.0
-------------------------------------------------------------
- [+] Aliases synchronized
- [+] Unused runtimes cleaned
- [i] Total Aliases:  42
-------------------------------------------------------------
-```
+* **Override:** `fam -o org.gimp.GIMP photoshop`
+* **Ignore:** `fam -i org.vim.Vim` (Prevents shadowing native Vim)
+* **Environment:** `fam -e org.mozilla.firefox MOZ_ENABLE_WAYLAND=1`
+* **Backup:** `fam --backup ~/fam-config.tar.gz`
 
-## How it Works
+## How It Works
 
-- A Systemd user unit watches `/var/lib/flatpak` and `~/.local/share/flatpak`.
-- When a change is detected, `fam` generates a list of aliases.
-- A lightweight shell function intercepts flatpak operational commands to provide immediate response and provide visual feedback to the user.
-
-
-## Uninstallation
-
-If you wish to remove FAM, simply run the installer script again. It detects the installation and offers a compelte removal option.
-
-## Contributions
-
-If you wish to contribute, feel free to fork the project and make a pull request with your own changes. I'm still learning scripting so any suggestions and criticisms are welcome.
+FAM calculates a "clean name" for each Flatpak. If a system command already exists with that name, it appends `-flatpak` to prevent conflicts. Aliases are stored in `~/.bashrc.d/` or `~/.config/fish/`. A systemd path unit monitors Flatpak export directories to trigger silent updates upon application changes.
 
 ## License
 
-This project is licensed under the **GNU General Public License v3.0**.
+GNU General Public License v3.0 (GPLv3).
+
