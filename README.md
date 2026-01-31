@@ -1,6 +1,6 @@
 # FAM - Flatpak Alias Manager
 
-FAM is an automation tool that generates shell aliases for Flatpak applications, enabling users to launch them via short commands (e.g., `firefox`) instead of full Application IDs. It features systemd integration for automatic updates and an interactive configuration menu.
+FAM is an automation tool madre forma personal use that generates shell aliases for Flatpak applications, enabling users to launch them via short commands (e.g., `firefox`) instead of full Application IDs. It features systemd integration for automatic updates and an interactive configuration menu.
 
 ## Features
 
