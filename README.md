@@ -48,7 +48,7 @@ FAM calculates a "clean name" for each Flatpak. If a system command already exis
 
 ## Disclaimer
 
-The script was made with AI assistance for personal use. Although it works reliably, check the source code before running it.
+The script was made with AI assistance for personal use. Although it works reliably on Fedora Silverblue, please check the source code before running it.
 
 ## License
 
