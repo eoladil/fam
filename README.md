@@ -2,8 +2,6 @@
 
 FAM is an automation tool that generates shell aliases for Flatpak applications, enabling the user to launch them via short commands instead of full Application IDs.
 
-It was scripted with AI help for personal use.
-
 ## Features
 
 * Bash, Zsh, and Fish support.
