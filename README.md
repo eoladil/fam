@@ -1,14 +1,15 @@
 # FAM - Flatpak Alias Manager
 
-FAM is an automation tool madre forma personal use that generates shell aliases for Flatpak applications, enabling users to launch them via short commands (e.g., `firefox`) instead of full Application IDs. It features systemd integration for automatic updates and an interactive configuration menu.
+FAM is an automation tool that generates shell aliases for Flatpak applications, enabling the user to launch them via short commands instead of full Application IDs.
+
+It was scripted with AI help for personal use.
 
 ## Features
 
 * Bash, Zsh, and Fish support.
-* Automation detection of Flatpak installs, removals and changes via a `systemd` user service.
+* Automated detection of Flatpak changes via a `systemd` user service.
 * Support for name overrides, blacklisting, and environment variable injection.
 * Built-in configuration for backups and restores.
-* Self-contained script for maximum portability.
 
 ## Installation
 
@@ -41,14 +42,6 @@ Run `fam` to sync aliases. Use flags below alone for **interactive menus** or wi
 * **Ignore:** `fam -i org.vim.Vim` (Prevents shadowing native Vim)
 * **Environment:** `fam -e org.mozilla.firefox MOZ_ENABLE_WAYLAND=1`
 * **Backup:** `fam --backup ~/fam-config.tar.gz`
-
-## How It Works
-
-FAM calculates a "clean name" for each Flatpak. If a system command already exists with that name, it appends `-flatpak` to prevent conflicts. Aliases are stored in `~/.bashrc.d/` or `~/.config/fish/`. A systemd path unit monitors Flatpak export directories to trigger silent updates upon application changes.
-
-## Disclaimer
-
-The script was made with AI assistance for personal use. Although it works reliably on Fedora Silverblue, please check the source code before running it.
 
 ## License
 
