@@ -2,6 +2,8 @@
 
 FAM is an automation tool that generates and manages shell aliases for Flatpak applications.  When active, it listens for new Flatpak installs or removals, updating the alias shell script accordingly.
 
+For example, running `librewolf` on the terminal becomes the equivalent of running `flatpak run io.gitlab.librewolf-community`. If the command already exists, a `-flatpak` tag is added to the alias.
+
 ## Features
 
 * Bash, Zsh, and Fish support.
@@ -34,14 +36,9 @@ Run `fam` to sync aliases. Use flags below alone for **interactive menus** or wi
 |  | `-r` | `--reinstall` | Repair systemd/shell hooks. | `fam -r` |
 |  | `-u` | `--uninstall` | Completely remove FAM. | `fam -u` |
 
-## Examples
+## Usage examples
 
 * **Override:** `fam -o org.gimp.GIMP photoshop`
 * **Ignore:** `fam -i org.vim.Vim` (Prevents shadowing native Vim)
 * **Environment:** `fam -e org.mozilla.firefox MOZ_ENABLE_WAYLAND=1`
 * **Backup:** `fam --backup ~/fam-config.tar.gz`
-
-## License
-
-GNU General Public License v3.0 (GPLv3).
-
