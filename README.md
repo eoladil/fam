@@ -42,3 +42,6 @@ Run `fam` to sync aliases. Use flags below alone for **interactive menus** or wi
 * **Ignore:** `fam -i org.vim.Vim` (Prevents shadowing native Vim)
 * **Environment:** `fam -e org.mozilla.firefox MOZ_ENABLE_WAYLAND=1`
 * **Backup:** `fam --backup ~/fam-config.tar.gz`
+
+## Disclosure
+Just a heads-up: this script was put together with some help from AI for learning purposes. It’s working great on Fedora Silverblue 44 right now, but I'll likely be doing some manual refactoring soon to clean things up.
