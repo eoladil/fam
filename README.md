@@ -1,6 +1,6 @@
 # FAM - Flatpak Alias Manager
 
-FAM is a self-contained automation tool that generates and manages shell aliases for Flatpak applications.  When active, it listens for new Flatpak installs or removals, updating the alias shell script accordingly.
+FAM is a script that automatically generates and manages shell aliases for Flatpak applications.  When active, it listens for new Flatpak installs or removals, updating the alias shell script accordingly.
 
 For example, running `librewolf` on the terminal becomes the equivalent of running `flatpak run io.gitlab.librewolf-community`. If the command already exists, a `-flatpak` tag is added to the alias.
 
