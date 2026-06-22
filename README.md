@@ -1,6 +1,6 @@
 # FAM - Flatpak Alias Manager
 
-FAM is an automation tool that generates and manages shell aliases for Flatpak applications.  When active, it listens for new Flatpak installs or removals, updating the alias shell script accordingly.
+FAM is a self-contained automation tool that generates and manages shell aliases for Flatpak applications.  When active, it listens for new Flatpak installs or removals, updating the alias shell script accordingly.
 
 For example, running `librewolf` on the terminal becomes the equivalent of running `flatpak run io.gitlab.librewolf-community`. If the command already exists, a `-flatpak` tag is added to the alias.
 
@@ -38,10 +38,21 @@ Run `fam` to sync aliases. Use flags below alone for **interactive menus** or wi
 
 ## Usage examples
 
-* **Override:** `fam -o org.gimp.GIMP photoshop`
-* **Ignore:** `fam -i org.vim.Vim` (Prevents shadowing native Vim)
-* **Environment:** `fam -e org.mozilla.firefox MOZ_ENABLE_WAYLAND=1`
-* **Backup:** `fam --backup ~/fam-config.tar.gz`
+* `fam -o org.gimp.GIMP photoshop` overrides GIMP's generated alias with `photoshop`.
+* `fam -i org.vim.Vim` prevents the Flatpak version of Vim from shadowing the native command.
+* `fam -e org.mozilla.firefox MOZ_ENABLE_WAYLAND=1` appends to Firefox's generated alias a custom environmental variable.
+* `fam --backup ~/fam-config.tar.gz` creates a backup of your configuration to a directory of your choice.
+
+## Roadmap
+
+* Cleanup and tidy the code a bit.
+* Translate manually to Python 3 with well defined functions.
+* Create a UI Prototype in GTK4/Libadwaita
+
+## Contributions
+
+Feel free to contribute in any form via Pull Requests, whether by placing ideas, features or bug reports. I'll gladly listen to your suggestions.
 
 ## Disclosure
-Just a heads-up: this script was put together with some help from AI for learning purposes. It’s working great on Fedora Silverblue 44 right now, but I'll likely be doing some manual refactoring soon to clean things up.
+
+Just a heads-up: this script was put together with some help from AI for learning purposes and due to time constrains. It’s currently working reliably on my Fedora Silverblue 44 machine right now. However, since my aim is to make a full-fledge app out of it, I will likely be doing some manual refactoring and translations to Python soon.
